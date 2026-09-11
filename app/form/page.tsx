@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ScreenFrame from "@/app/components/ScreenFrame";
 import LabeledInput from "@/app/components/LabeledInput";
@@ -21,6 +21,14 @@ import type { ScheduleInput } from "@/app/lib/types";
  * - P3: 제목 필수·max 30자, 날짜 필수·오늘 이후, 시간 필수, 장소 필수
  */
 export default function ScheduleFormPage() {
+  return (
+    <Suspense fallback={null}>
+      <ScheduleForm />
+    </Suspense>
+  );
+}
+
+function ScheduleForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const scheduleId = searchParams.get("id");
