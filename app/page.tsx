@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import ScreenFrame from "@/app/components/ScreenFrame";
 import ScheduleCard from "@/app/components/ScheduleCard";
 import IconButton from "@/app/components/IconButton";
@@ -17,6 +18,7 @@ import type { Schedule } from "@/app/lib/types";
  * - 일정이 없으면 빈 상태 표시 (F2 예외)
  */
 export default function ScheduleListPage() {
+  const router = useRouter();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -36,9 +38,8 @@ export default function ScheduleListPage() {
 
   const handleAddClick = () => {
     // TODO: 총무 여부를 확인해야 함 (P1)
-    // 지금은 버튼을 항상 보여두고, 총무 확인 로직 추가 시 활성화
-    // router.push("/form");
-    console.log("일정 추가 버튼 클릭 - 라우트 미구현");
+    // 현재는 누구나 버튼을 볼 수 있다. 로그인 기능 추가 시(모듈2) 총무만 보여준다.
+    router.push("/form");
   };
 
   const handleCardClick = (scheduleId: string) => {

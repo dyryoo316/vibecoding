@@ -18,6 +18,8 @@ export type LabeledInputProps = {
   counter?: string;
   /** 입력칸 아래 경고 한 줄 (원본: "지난 날짜입니다") */
   error?: string;
+  /** date input의 최소값 (P3 — 오늘 이후만) */
+  min?: string;
 };
 
 export default function LabeledInput({
@@ -30,6 +32,7 @@ export default function LabeledInput({
   maxLength,
   counter,
   error,
+  min,
 }: LabeledInputProps) {
   return (
     <div className="flex flex-col gap-2">
@@ -54,6 +57,7 @@ export default function LabeledInput({
         value={value}
         placeholder={placeholder}
         maxLength={maxLength}
+        min={min}
         onChange={(event) => onChange?.(event.target.value)}
         className="w-full min-h-tap-min font-sans text-base text-text bg-surface border border-border rounded-md px-4 py-3 outline-none focus:border-primary"
       />
