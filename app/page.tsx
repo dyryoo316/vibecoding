@@ -1,10 +1,122 @@
-export default function Home() {
+"use client";
+
+import { useEffect, useState } from "react";
+import ScreenFrame from "@/app/components/ScreenFrame";
+import ScheduleCard from "@/app/components/ScheduleCard";
+import IconButton from "@/app/components/IconButton";
+import EmptyState from "@/app/components/EmptyState";
+import { PlusIcon } from "@/app/components/Icons";
+import { getUpcomingSchedules, getAttendanceSummary } from "@/app/lib/storage";
+import type { Schedule } from "@/app/lib/types";
+
+/**
+ * 일정 목록 화면 (Main.dc.html)
+ * - 다가오는 일정을 날짜순으로 표시
+ * - 각 일정의 참석 상황을 인원 수로 표시
+ * - 변경된 일정에는 "변경됨" 배지 표시 (P4)
+ * - 일정이 없으면 빈 상태 표시 (F2 예외)
+ */
+export default function ScheduleListPage() {
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    try {
+      const upcoming = getUpcomingSchedules();
+      setSchedules(upcoming);
+    } catch (error) {
+      console.error("일정 목록 로드 실패:", error);
+      setSchedules([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const isEmpty = !isLoading && schedules.length === 0;
+
+  const handleAddClick = () => {
+    // TODO: 총무 여부를 확인해야 함 (P1)
+    // 지금은 버튼을 항상 보여두고, 총무 확인 로직 추가 시 활성화
+    // router.push("/form");
+    console.log("일정 추가 버튼 클릭 - 라우트 미구현");
+  };
+
+  const handleCardClick = (scheduleId: string) => {
+    // TODO: 일정 상세 화면 라우트 미구현
+    // router.push(`/detail/${scheduleId}`);
+    console.log("일정 카드 클릭:", scheduleId);
+  };
+
+  /**
+   * 날짜를 "9월 12일(토)" 형식으로 포맷
+   * storage의 date는 YYYY-MM-DD 형식
+   */
+  const formatDate = (dateString: string): string => {
+    try {
+      const date = new Date(dateString + "T00:00:00");
+      const formatter = new Intl.DateTimeFormat("ko-KR", {
+        month: "long",
+        day: "numeric",
+        weekday: "short",
+      });
+      const parts = formatter.formatToParts(date);
+      const month = parts.find((p) => p.type === "month")?.value || "";
+      const day = parts.find((p) => p.type === "day")?.value || "";
+      const weekday = parts.find((p) => p.type === "weekday")?.value || "";
+      return `${month} ${day}일(${weekday})`;
+    } catch {
+      return dateString;
+    }
+  };
+
+  /**
+   * 참석 인원을 "참석 8명" 형식으로 표시
+   * F4: 참석 · 불참 · 미응답 인원 표시
+   */
+  const getAttendeeLabel = (scheduleId: string): string => {
+    try {
+      const summary = getAttendanceSummary(scheduleId);
+      const attendCount = summary.attend.length;
+      // 현재 목록 화면에서는 참석 인원만 표시 (상세 화면에서 세부 보기)
+      return `참석 ${attendCount}명`;
+    } catch {
+      return "참석 0명";
+    }
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-8">
-      <h1 className="text-2xl font-semibold">팀 일정 관리</h1>
-      <p className="text-sm opacity-70">
-        Next.js 앱 기본 구성만 되어 있습니다. 화면은 아직 만들지 않았습니다.
-      </p>
-    </main>
+    <ScreenFrame
+      title="팀 일정 관리"
+      subtitle="다가오는 일정"
+      headerRight={
+        <IconButton
+          label="일정 추가"
+          icon={<PlusIcon className="size-icon-md" />}
+          variant="primary"
+          onClick={handleAddClick}
+        />
+      }
+      scrollable={!isEmpty}
+      showBack={false}
+    >
+      {isEmpty ? (
+        <EmptyState />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {schedules.map((schedule) => (
+            <ScheduleCard
+              key={schedule.id}
+              title={schedule.title}
+              date={formatDate(schedule.date)}
+              time={schedule.time}
+              place={schedule.place}
+              attendeeLabel={getAttendeeLabel(schedule.id)}
+              changed={schedule.changed}
+              onClick={() => handleCardClick(schedule.id)}
+            />
+          ))}
+        </div>
+      )}
+    </ScreenFrame>
   );
 }
