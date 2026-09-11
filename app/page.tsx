@@ -20,18 +20,36 @@ import type { Schedule } from "@/app/lib/types";
 export default function ScheduleListPage() {
   const router = useRouter();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [attendeeCounts, setAttendeeCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const upcoming = getUpcomingSchedules();
-      setSchedules(upcoming);
-    } catch (error) {
-      console.error("일정 목록 로드 실패:", error);
-      setSchedules([]);
-    } finally {
-      setIsLoading(false);
-    }
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const upcoming = await getUpcomingSchedules();
+        const summaries = await Promise.all(
+          upcoming.map((schedule) => getAttendanceSummary(schedule.id)),
+        );
+        if (cancelled) return;
+        setSchedules(upcoming);
+        setAttendeeCounts(
+          Object.fromEntries(
+            upcoming.map((schedule, index) => [schedule.id, summaries[index].attend.length]),
+          ),
+        );
+      } catch (error) {
+        console.error("일정 목록 로드 실패:", error);
+        if (!cancelled) setSchedules([]);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const isEmpty = !isLoading && schedules.length === 0;
@@ -73,16 +91,11 @@ export default function ScheduleListPage() {
   /**
    * 참석 인원을 "참석 8명" 형식으로 표시
    * F4: 참석 · 불참 · 미응답 인원 표시
+   * (인원 수는 목록 로드 시 함께 미리 받아 둔 값을 읽는다 — 카드마다 다시 부르지 않는다)
    */
   const getAttendeeLabel = (scheduleId: string): string => {
-    try {
-      const summary = getAttendanceSummary(scheduleId);
-      const attendCount = summary.attend.length;
-      // 현재 목록 화면에서는 참석 인원만 표시 (상세 화면에서 세부 보기)
-      return `참석 ${attendCount}명`;
-    } catch {
-      return "참석 0명";
-    }
+    const attendCount = attendeeCounts[scheduleId] ?? 0;
+    return `참석 ${attendCount}명`;
   };
 
   return (

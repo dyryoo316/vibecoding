@@ -41,23 +41,32 @@ export default function ScheduleFormPage() {
 
   // 마운트 시 수정 모드면 기존 일정 로드
   useEffect(() => {
-    if (isEditMode && scheduleId) {
-      try {
-        const schedule = getSchedule(scheduleId);
-        if (schedule) {
-          setTitle(schedule.title);
-          setDate(schedule.date);
-          setTime(schedule.time);
-          setPlace(schedule.place);
-        } else {
-          setErrorMessage("일정을 찾을 수 없습니다");
+    let cancelled = false;
+
+    (async () => {
+      if (isEditMode && scheduleId) {
+        try {
+          const schedule = await getSchedule(scheduleId);
+          if (cancelled) return;
+          if (schedule) {
+            setTitle(schedule.title);
+            setDate(schedule.date);
+            setTime(schedule.time);
+            setPlace(schedule.place);
+          } else {
+            setErrorMessage("일정을 찾을 수 없습니다");
+          }
+        } catch (error) {
+          console.error("일정 로드 실패:", error);
+          if (!cancelled) setErrorMessage("일정 로드 중 오류가 발생했습니다");
         }
-      } catch (error) {
-        console.error("일정 로드 실패:", error);
-        setErrorMessage("일정 로드 중 오류가 발생했습니다");
       }
-    }
-    setIsLoading(false);
+      if (!cancelled) setIsLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isEditMode, scheduleId]);
 
   // 오늘 날짜 (date input의 min 속성용)
@@ -100,7 +109,7 @@ export default function ScheduleFormPage() {
     try {
       if (isEditMode && scheduleId) {
         // F5: 일정 수정
-        const result = updateSchedule(scheduleId, input);
+        const result = await updateSchedule(scheduleId, input);
         if (result.ok) {
           // 상세 화면으로 이동 (다음 세션: /detail/{id})
           // 현재는 목록으로 돌아가기
@@ -118,7 +127,7 @@ export default function ScheduleFormPage() {
         }
       } else {
         // F1: 새 일정 추가
-        const result = addSchedule(input);
+        const result = await addSchedule(input);
         if (result.ok) {
           router.push("/");
         } else {

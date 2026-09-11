@@ -85,7 +85,7 @@ export type StorageErrorCode =
   | "PAST_DATE" /** 지난 날짜다 (P3 — 화면 문구 "지난 날짜입니다") */
   | "NOT_FOUND" /** 그런 일정이 없다 */
   | "NOT_UPCOMING" /** 상태가 "예정" 이 아니다 (P2 · P4 — 화면 문구 "이미 시작된 일정입니다") */
-  | "STORAGE_UNAVAILABLE"; /** 브라우저 저장소에 쓸 수 없다(프라이빗 창 등) */
+  | "STORAGE_UNAVAILABLE"; /** 서버 저장소(데이터베이스)에 쓸 수 없다(연결 실패 · 네트워크 오류 등) */
 
 export type StorageResult<T> =
   | { ok: true; value: T }
